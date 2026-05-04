@@ -13,7 +13,6 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ImportarPinit extends Page implements HasForms
@@ -56,13 +55,15 @@ class ImportarPinit extends Page implements HasForms
             ->schema([
                 FileUpload::make('archivo')
                     ->label('Archivo Pinit (.xlsx)')
+                    ->disk('pinit_imports')
+                    ->directory('uploads')
+                    ->preserveFilenames()
                     ->acceptedFileTypes([
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         'application/vnd.ms-excel',
                     ])
                     ->maxSize(20480)
                     ->required()
-                    ->storeFiles(false)
                     ->helperText('Arrastra el archivo o haz clic para seleccionarlo. Acepta .xlsx exportado de Pinit.'),
             ])
             ->statePath('data');
@@ -70,26 +71,16 @@ class ImportarPinit extends Page implements HasForms
 
     public function importar(): void
     {
-        $archivoRaw = data_get($this->data, 'archivo');
-        $tmpFile = is_array($archivoRaw) ? reset($archivoRaw) : $archivoRaw;
+        $datos = $this->form->getState();
+        $archivoRaw = $datos['archivo'];
+        $archivoPath = is_array($archivoRaw) ? (reset($archivoRaw) ?: '') : $archivoRaw;
 
-        if (empty($tmpFile)) {
+        if (empty($archivoPath)) {
             return;
         }
 
-        // Resolver archivo: puede ser TemporaryUploadedFile (upload real) o string (tests)
-        if ($tmpFile instanceof TemporaryUploadedFile) {
-            $nombreOriginal = $tmpFile->getClientOriginalName();
-            $filename = now()->format('Ymd_His').'_'.$nombreOriginal;
-            $archivoPath = 'uploads/'.$filename;
-            $contenido = file_get_contents($tmpFile->getRealPath());
-            Storage::disk('pinit_imports')->put($archivoPath, $contenido);
-        } else {
-            $archivoPath = $tmpFile;
-            $nombreOriginal = basename($archivoPath);
-        }
-
         $parser = app(PinitParser::class);
+        $nombreOriginal = basename($archivoPath);
 
         // Extraer fecha del nombre
         $fechaArchivo = $parser->extraerFechaDelNombre($nombreOriginal);
