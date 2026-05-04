@@ -80,9 +80,8 @@ class ImportarPinit extends Page implements HasForms
         // Resolver archivo: puede ser TemporaryUploadedFile (upload real) o string (tests)
         if ($tmpFile instanceof TemporaryUploadedFile) {
             $nombreOriginal = $tmpFile->getClientOriginalName();
-            $archivoPath = 'uploads/'.now()->format('Ymd_His').'_'.$nombreOriginal;
-            Storage::disk('pinit_imports')->put($archivoPath, $tmpFile->get());
-            $tmpFile->delete();
+            $filename = now()->format('Ymd_His').'_'.$nombreOriginal;
+            $archivoPath = $tmpFile->storeAs('uploads', $filename, 'pinit_imports');
         } else {
             // String path — ya esta en el disk pinit_imports (tests)
             $archivoPath = $tmpFile;
