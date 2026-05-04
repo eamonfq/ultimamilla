@@ -70,8 +70,7 @@ class ImportarPinit extends Page implements HasForms
 
     public function importar(): void
     {
-        $datos = $this->form->getState();
-        $archivoRaw = $datos['archivo'] ?? null;
+        $archivoRaw = data_get($this->data, 'archivo');
         $tmpFile = is_array($archivoRaw) ? reset($archivoRaw) : $archivoRaw;
 
         if (empty($tmpFile)) {
