@@ -64,7 +64,7 @@ return [
     */
 
     'temporary_file_upload' => [
-        'disk' => 'local',
+        'disk' => 'pinit_imports',
         'rules' => ['file', 'max:25600'],
         'directory' => 'livewire-tmp',
         'middleware' => null,
