@@ -1,0 +1,81 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* === Login admin: gradiente de fondo === */
+.fi-simple-layout {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #312e81 100%) !important;
+    min-height: 100vh;
+}
+
+.fi-simple-layout .fi-simple-main-ctn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* Card del login */
+.fi-simple-layout .fi-simple-main {
+    background: white !important;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    max-width: 24rem;
+    width: 100%;
+    color-scheme: light;
+}
+
+/* === Forzar light mode dentro del card de login === */
+.fi-simple-layout .fi-simple-main input,
+.fi-simple-layout .fi-simple-main input[type="text"],
+.fi-simple-layout .fi-simple-main input[type="email"],
+.fi-simple-layout .fi-simple-main input[type="password"] {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
+
+.fi-simple-layout .fi-simple-main input::placeholder {
+    color: #94a3b8 !important;
+}
+
+.fi-simple-layout .fi-simple-main input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 1px #6366f1 !important;
+}
+
+.fi-simple-layout .fi-simple-main label,
+.fi-simple-layout .fi-simple-main .fi-fo-field-wrp label {
+    color: #334155 !important;
+}
+
+.fi-simple-layout .fi-simple-main h1,
+.fi-simple-layout .fi-simple-main .fi-simple-header-heading,
+.fi-simple-layout .fi-simple-main .fi-header-heading {
+    color: #0f172a !important;
+}
+
+.fi-simple-layout .fi-simple-main .fi-simple-header-subheading,
+.fi-simple-layout .fi-simple-main p {
+    color: #64748b !important;
+}
+
+/* Checkbox "remember me" label */
+.fi-simple-layout .fi-simple-main .fi-checkbox-label,
+.fi-simple-layout .fi-simple-main span {
+    color: #475569 !important;
+}
+
+/* No afectar el boton de submit */
+.fi-simple-layout .fi-simple-main button[type="submit"] span,
+.fi-simple-layout .fi-simple-main .fi-btn span {
+    color: inherit !important;
+}
