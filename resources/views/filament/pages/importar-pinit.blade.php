@@ -5,18 +5,36 @@
             <p class="text-sm text-slate-500 dark:text-gray-400 mb-4">El archivo se procesa en segundo plano. Puedes navegar a otras paginas mientras tanto.</p>
 
             <form wire:submit="importar">
-                {{ $this->form }}
+                <div class="space-y-2">
+                    <label for="archivo" class="block text-sm font-medium text-slate-700 dark:text-gray-300">
+                        Archivo Pinit (.xlsx)
+                    </label>
+                    <input
+                        type="file"
+                        id="archivo"
+                        wire:model="archivo"
+                        accept=".xlsx,.xls"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:text-gray-400 dark:file:bg-indigo-900 dark:file:text-indigo-300"
+                    />
+                    <p class="text-xs text-slate-400 dark:text-gray-500">Acepta .xlsx exportado de Pinit. Max 25MB.</p>
+                    @error('archivo') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+
+                    {{-- Indicador de subida --}}
+                    <div wire:loading wire:target="archivo" class="text-xs text-indigo-600 dark:text-indigo-400">
+                        Subiendo archivo...
+                    </div>
+                </div>
 
                 <div class="mt-4 flex justify-end">
                     <button
                         type="submit"
                         wire:loading.attr="disabled"
-                        wire:target="importar"
+                        wire:target="importar,archivo"
                         @disabled($this->importIdEnProceso !== null)
                         class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition"
                     >
                         <span wire:loading.remove wire:target="importar">Importar</span>
-                        <span wire:loading wire:target="importar">Subiendo...</span>
+                        <span wire:loading wire:target="importar">Procesando...</span>
                     </button>
                 </div>
             </form>

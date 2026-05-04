@@ -6,18 +6,15 @@ use App\Enums\StatusImport;
 use App\Jobs\ProcesarPinitImport;
 use App\Models\PinitImport;
 use App\Services\PinitParser;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Storage;
+use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 
-class ImportarPinit extends Page implements HasForms
+class ImportarPinit extends Page
 {
-    use InteractsWithForms;
+    use WithFileUploads;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-up-tray';
 
@@ -31,14 +28,12 @@ class ImportarPinit extends Page implements HasForms
 
     protected string $view = 'filament.pages.importar-pinit';
 
-    public ?array $data = [];
+    public $archivo;
 
     public ?int $importIdEnProceso = null;
 
     public function mount(): void
     {
-        $this->form->fill();
-
         $procesando = PinitImport::query()
             ->whereIn('status', [StatusImport::Pending, StatusImport::Processing])
             ->latest()
@@ -49,38 +44,26 @@ class ImportarPinit extends Page implements HasForms
         }
     }
 
-    public function form(Schema $form): Schema
-    {
-        return $form
-            ->schema([
-                FileUpload::make('archivo')
-                    ->label('Archivo Pinit (.xlsx)')
-                    ->disk('pinit_imports')
-                    ->directory('uploads')
-                    ->preserveFilenames()
-                    ->acceptedFileTypes([
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        'application/vnd.ms-excel',
-                    ])
-                    ->maxSize(20480)
-                    ->required()
-                    ->helperText('Arrastra el archivo o haz clic para seleccionarlo. Acepta .xlsx exportado de Pinit.'),
-            ])
-            ->statePath('data');
-    }
-
     public function importar(): void
     {
-        $datos = $this->form->getState();
-        $archivoRaw = $datos['archivo'];
-        $archivoPath = is_array($archivoRaw) ? (reset($archivoRaw) ?: '') : $archivoRaw;
+        $this->validate([
+            'archivo' => ['required', 'file', 'max:25600'],
+        ]);
 
-        if (empty($archivoPath)) {
-            return;
-        }
+        $nombreOriginal = $this->archivo->getClientOriginalName();
+        $archivoPath = 'uploads/'.$nombreOriginal;
 
+        // Guardar archivo en disco pinit_imports
+        Storage::disk('pinit_imports')->put($archivoPath, file_get_contents($this->archivo->getRealPath()));
+
+        $this->archivo = null;
+
+        $this->procesarArchivo($archivoPath, $nombreOriginal);
+    }
+
+    public function procesarArchivo(string $archivoPath, string $nombreOriginal): void
+    {
         $parser = app(PinitParser::class);
-        $nombreOriginal = basename($archivoPath);
 
         // Extraer fecha del nombre
         $fechaArchivo = $parser->extraerFechaDelNombre($nombreOriginal);
@@ -160,7 +143,6 @@ class ImportarPinit extends Page implements HasForms
         ProcesarPinitImport::dispatch($import->id);
 
         $this->importIdEnProceso = $import->id;
-        $this->form->fill();
 
         Notification::make()
             ->success()
