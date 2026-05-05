@@ -195,7 +195,7 @@ class PinitParser
      */
     public function extraerFechaDelNombre(string $nombreArchivo): ?Carbon
     {
-        if (preg_match('/(\d{4})-(\d{2})-(\d{2})(?:-to-\d{4}-\d{2}-\d{2})?\.xlsx?$/i', $nombreArchivo, $matches)) {
+        if (preg_match('/(\d{4})-(\d{2})-(\d{2})(?:-to-\d{4}-\d{2}-\d{2})?/', $nombreArchivo, $matches)) {
             try {
                 return Carbon::createFromDate((int) $matches[1], (int) $matches[2], (int) $matches[3], 'America/Bogota')->startOfDay();
             } catch (\Throwable $e) {
