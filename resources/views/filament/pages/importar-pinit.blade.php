@@ -18,19 +18,33 @@
 
             <form action="{{ route('pinit-import.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="space-y-2">
+                <div class="space-y-3">
                     <label for="archivo" class="block text-sm font-medium text-slate-700 dark:text-gray-300">
                         Archivo Pinit (.xlsx)
                     </label>
-                    <input
-                        type="file"
-                        id="archivo"
-                        name="archivo"
-                        accept=".xlsx,.xls"
-                        required
-                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:text-gray-400 dark:file:bg-indigo-900 dark:file:text-indigo-300"
-                    />
-                    <p class="text-xs text-slate-400 dark:text-gray-500">Acepta .xlsx exportado de Pinit. Max 25MB.</p>
+                    <div class="relative flex items-center justify-center w-full">
+                        <label for="archivo" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 transition">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-8 h-8 mb-3 text-slate-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                <p class="mb-1 text-sm text-slate-600 dark:text-gray-400">
+                                    <span class="font-semibold">Haz clic para seleccionar</span> o arrastra el archivo
+                                </p>
+                                <p class="text-xs text-slate-400 dark:text-gray-500">.xlsx exportado de Pinit (max 25MB)</p>
+                            </div>
+                            <input
+                                type="file"
+                                id="archivo"
+                                name="archivo"
+                                accept=".xlsx,.xls"
+                                required
+                                class="hidden"
+                                onchange="document.getElementById('file-name-display').textContent = this.files[0]?.name || ''"
+                            />
+                        </label>
+                    </div>
+                    <p id="file-name-display" class="text-sm font-medium text-indigo-600 dark:text-indigo-400"></p>
                     @error('archivo') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
