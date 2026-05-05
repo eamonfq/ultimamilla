@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\StatusImport;
-use App\Filament\Pages\ImportarPinit;
 use App\Jobs\ProcesarPinitImport;
 use App\Models\PinitImport;
 use App\Models\User;
@@ -9,7 +8,6 @@ use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Livewire;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Activitylog\Models\Activity;
@@ -26,7 +24,7 @@ afterEach(function () {
     Carbon::setTestNow();
 });
 
-function storeValidExcel(string $filename = 'report-2026-05-02-to-2026-05-02.xlsx', ?array $rows = null): string
+function makeExcelFile(string $filename, ?array $rows = null): UploadedFile
 {
     if ($rows === null) {
         $header = array_fill(0, 38, '');
@@ -48,8 +46,9 @@ function storeValidExcel(string $filename = 'report-2026-05-02-to-2026-05-02.xls
     }
 
     $collection = collect($rows);
-    $path = 'uploads/'.$filename;
 
+    // Write Excel to a temp file
+    $tmpPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.$filename;
     Excel::store(
         new class($collection) implements FromCollection
         {
@@ -60,18 +59,29 @@ function storeValidExcel(string $filename = 'report-2026-05-02-to-2026-05-02.xls
                 return $this->data;
             }
         },
-        $path,
+        $filename,
         'pinit_imports'
     );
 
-    return $path;
+    $content = Storage::disk('pinit_imports')->get($filename);
+    Storage::disk('pinit_imports')->delete($filename);
+    file_put_contents($tmpPath, $content);
+
+    return new UploadedFile(
+        $tmpPath,
+        $filename,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        null,
+        true
+    );
 }
 
 it('admin can upload valid file and import is queued', function () {
-    $path = storeValidExcel();
+    $file = makeExcelFile('report-2026-05-02-to-2026-05-02.xlsx');
 
-    Livewire::test(ImportarPinit::class)
-        ->call('procesarArchivo', $path, 'report-2026-05-02-to-2026-05-02.xlsx');
+    $this->post(route('pinit-import.store'), ['archivo' => $file])
+        ->assertRedirect()
+        ->assertSessionHas('success');
 
     $import = PinitImport::first();
     expect($import)->not->toBeNull();
@@ -82,24 +92,24 @@ it('admin can upload valid file and import is queued', function () {
 });
 
 it('rejects file without YYYY-MM-DD in name', function () {
-    $path = storeValidExcel('random-file.xlsx');
+    $file = makeExcelFile('random-file.xlsx');
 
-    Livewire::test(ImportarPinit::class)
-        ->call('procesarArchivo', $path, 'random-file.xlsx')
-        ->assertNotified('Nombre de archivo invalido');
+    $this->post(route('pinit-import.store'), ['archivo' => $file])
+        ->assertRedirect()
+        ->assertSessionHas('error');
 
     expect(PinitImport::count())->toBe(0);
 });
 
 it('rejects file with bad cabeceras', function () {
-    $path = storeValidExcel('report-2026-05-02-to-2026-05-02.xlsx', [
+    $file = makeExcelFile('report-2026-05-02-to-2026-05-02.xlsx', [
         ['Foo', 'Bar', 'Baz'],
         ['data1', 'data2', 'data3'],
     ]);
 
-    Livewire::test(ImportarPinit::class)
-        ->call('procesarArchivo', $path, 'report-2026-05-02-to-2026-05-02.xlsx')
-        ->assertNotified('Archivo invalido');
+    $this->post(route('pinit-import.store'), ['archivo' => $file])
+        ->assertRedirect()
+        ->assertSessionHas('error');
 
     expect(PinitImport::count())->toBe(0);
 });
@@ -113,10 +123,11 @@ it('previous done import becomes superseded on reupload for same date', function
         'importado_por' => $this->admin->id,
     ]);
 
-    $path = storeValidExcel();
+    $file = makeExcelFile('report-2026-05-02-to-2026-05-02.xlsx');
 
-    Livewire::test(ImportarPinit::class)
-        ->call('procesarArchivo', $path, 'report-2026-05-02-to-2026-05-02.xlsx');
+    $this->post(route('pinit-import.store'), ['archivo' => $file])
+        ->assertRedirect()
+        ->assertSessionHas('success');
 
     $previo->refresh();
     expect($previo->status)->toBe(StatusImport::Superseded);
@@ -137,11 +148,11 @@ it('cannot upload while another import is processing for same date', function ()
         'importado_por' => $this->admin->id,
     ]);
 
-    $path = storeValidExcel();
+    $file = makeExcelFile('report-2026-05-02-to-2026-05-02.xlsx');
 
-    Livewire::test(ImportarPinit::class)
-        ->call('procesarArchivo', $path, 'report-2026-05-02-to-2026-05-02.xlsx')
-        ->assertNotified('Import en curso');
+    $this->post(route('pinit-import.store'), ['archivo' => $file])
+        ->assertRedirect()
+        ->assertSessionHas('error');
 
     expect(PinitImport::count())->toBe(1);
 });
