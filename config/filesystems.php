@@ -50,7 +50,6 @@ return [
         'pinit_imports' => [
             'driver' => 'local',
             'root' => storage_path('app/private/pinit_imports'),
-            'visibility' => 'private',
             'throw' => false,
             'report' => false,
         ],
